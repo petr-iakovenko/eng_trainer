@@ -10,11 +10,14 @@ conn_db = psycopg2.connect(
 )
 
 cursor = conn_db.cursor()
-cursor.execute("select word_en, countet_try, counter_forgot from english_words.eng_to_rus_words where flag_forgot = 1 order by counter_forgot desc limit 100;")
+cursor.execute("""SELECT word_en, countet_try, counter_forgot 
+               FROM english_words.eng_to_rus_words 
+               WHERE flag_forgot = 1 
+               ORDER BY counter_forgot desc 
+               LIMIT 100;""")
 rows = cursor.fetchall()
 print('==============================================================')
 print('Статистика:')
-# print(*rows, sep='\n')
 print(f'Слово/Фраза - Удачных попыток - Вызов помощи')
 for row in rows:
     print(f'"{row[0]}" - {row[1]} - {row[2]}')
@@ -25,10 +28,13 @@ def add_word_db_en(word):
     """to update word on eng"""
     list_ = []
     cur = conn_db.cursor()
-    cur.execute("""SELECT word_en FROM english_words.eng_to_rus_words WHERE word_en = %s""", (word,))
+    cur.execute("""SELECT word_en 
+                FROM english_words.eng_to_rus_words 
+                WHERE word_en = %s""", (word,))
     row = cur.fetchall()
     if row == list_:
-        cur.execute("""insert into english_words.eng_to_rus_words (word_en) VALUES (%s)""", (word,))
+        cur.execute("""INSERT INTO english_words.eng_to_rus_words (word_en) 
+                    VALUES (%s)""", (word,))
         conn_db.commit()
     else:
         pass
@@ -36,17 +42,22 @@ def add_word_db_en(word):
 def add_translate_word_db_en(word, translate):
     """to update translate word on rus"""
     cur = conn_db.cursor()
-    cur.execute("""update english_words.eng_to_rus_words set word_ru = %s WHERE word_en = %s """, (translate, word,))
+    cur.execute("""UPDATE english_words.eng_to_rus_words 
+                SET word_ru = %s 
+                WHERE word_en = %s """, (translate, word,))
     conn_db.commit()
 
 def add_word_db_ru(word):
     """добавляет в БД слова RU"""
     list_ = []
     cur = conn_db.cursor()
-    cur.execute("""SELECT word FROM russian_words.words WHERE word = %s""", (word,))
+    cur.execute("""SELECT word 
+                FROM russian_words.words 
+                WHERE word = %s""", (word,))
     row = cur.fetchall()
     if row == list_:
-        cur.execute("""insert into russian_words.words (word) VALUES (%s)""", (word,))
+        cur.execute("""insert into russian_words.words (word) 
+                    VALUES (%s)""", (word,))
         conn_db.commit()
     else:
         pass
@@ -54,27 +65,39 @@ def add_word_db_ru(word):
 def statistic_word_right(word):
     """to update counter correct response"""
     cur = conn_db.cursor()
-    cur.execute("""UPDATE english_words.eng_to_rus_words  SET countet_try = countet_try + 1 WHERE word_en = %s""", (word,))
+    cur.execute("""UPDATE english_words.eng_to_rus_words  
+                SET countet_try = countet_try + 1
+                WHERE word_en = %s""", (word,))
     conn_db.commit()
-    cur.execute("""SELECT countet_try FROM english_words.eng_to_rus_words WHERE word_en = %s""", (word,))
+    cur.execute("""SELECT countet_try 
+                FROM english_words.eng_to_rus_words 
+                WHERE word_en = %s""", (word,))
     rows = cur.fetchall()
     if rows[0][0] == 10:
-        cur.execute("""UPDATE english_words.eng_to_rus_words  SET flag_forgot = 0 WHERE word_en = %s""", (word,))
+        cur.execute("""UPDATE english_words.eng_to_rus_words 
+                    SET flag_forgot = 0 
+                    WHERE word_en = %s""", (word,))
         conn_db.commit()
 
 
 def statistic_word_help(word):
     """to update counter run 'помощь'"""
     cur = conn_db.cursor()
-    cur.execute("""UPDATE english_words.eng_to_rus_words  SET countet_try = 0 WHERE word_en = %s""", (word,))
+    cur.execute("""UPDATE english_words.eng_to_rus_words  
+                SET countet_try = 0 
+                WHERE word_en = %s""", (word,))
     conn_db.commit()
-    cur.execute("""UPDATE english_words.eng_to_rus_words  SET counter_forgot = counter_forgot + 1 WHERE word_en = %s""", (word,))
+    cur.execute("""UPDATE english_words.eng_to_rus_words  
+                SET counter_forgot = counter_forgot + 1 
+                WHERE word_en = %s""", (word,))
     conn_db.commit()
     
 
 def flag_forgot(word): 
     cur = conn_db.cursor()
-    cur.execute("""UPDATE english_words.eng_to_rus_words  SET flag_forgot = 1 WHERE word_en = %s""", (word,))
+    cur.execute("""UPDATE english_words.eng_to_rus_words  
+                SET flag_forgot = 1 
+                WHERE word_en = %s""", (word,))
     conn_db.commit()
 
 
@@ -92,8 +115,7 @@ def add_points(points_, flag):
         print(f'>>>> Твой результат ---------> {points_} очков.')
     elif points_ == 21:
         print(f'Поздравляю!\nТвой результат {points_} очков\nПоменяй сложность если слишком легко.')
-    return points_
-    
+    return points_   
 
 dict_pol_les_preply = {
     1: 'unemployed', 1001: 'безработный',
@@ -173,7 +195,7 @@ dict_pol_les_preply = {
     75: 'Rest', 1075: 'отдых',
     76: 'Hold it', 1076: 'подержи',
     77: 'Not for long', 1077: 'ненадолго',
-    78: 'Foreign', 1078: 'зарубежный',
+    78: 'Foreign', 1078: 'зарубежный; внешний',
     79: 'Abroad', 1079: 'за границей',
     80: 'Collaborate', 1080: 'сотрудничать',
     81: 'Upstairs', 1081: 'наверху',
@@ -303,23 +325,55 @@ dict_pol_les_preply = {
 
 
 def dif_choice():
+    """run choice difficulty"""
     print('\n\n============= программа "Тренажер английского v2.0" запущена =============\n\n')
     while True:
-        print('Выбери сложность:\nTranslate B1 words to RUS:\n\t1 - All words\nTranslate B1 forgotten_words to RUS:\n\t2 - All words')
+        print('Выбери сложность:\nTranslate B1 words to RUS:'
+              '\n\t1 - B1 words to RUS'
+              '\n\t2 - B1 forgotten_words to RUS'
+              '\n\t3 - !!!!\n\t4 - ????')
         difficulty = (input('Выбрана сложность: ').strip())
         if difficulty == '1':
-            print('\n"Translate B1 words to RUS"')
-            print(
-                '- переводите фразы на англиский язык; \n- за правильный ответ ты получишь +1 point и -5 points если ошибешься.')
+            print('\n"1 - B1 words to RUS"'
+                  '\n-- переводите фразы на англиский язык; '
+                  '\n- за правильный ответ ты получишь +1 '
+                  'point и -5 points если ошибешься.')
             return diff_1()
         elif difficulty == '2':
-            print('\n"Translate B1 forgotten_words to RUS"')
-            print(
-                '- переводите фразы на англиский язык; \n- за правильный ответ ты получишь +1 point и -5 points если ошибешься.')
+            print('\n"2 - B1 forgotten_words to RUS"'
+                  '\n-- переводите фразы на англиский язык; '
+                  '\n- за правильный ответ ты получишь +1 '
+                  'point и -5 points если ошибешься.')
             return diff_2()
+        elif difficulty == 'Clear':
+            print('Обчистка таблицы forgotten_word запущена!!!')
+            return clear_forgotten_table()
+        elif difficulty == 'Update':
+            print('Добавление новых забытых слов')
+            return insert_new_forgotten_words()
         else:
-            print('ОШИБКА ВВОДА!\n \n \n')
+            print('ОШИБКА ВВОДА!\n\n\n')
     
+def forgotten_words():
+    """return dict(key=num, value=word) from database"""
+    dict_forgotten_word = {}
+    cur = conn_db.cursor()
+    cur.execute("""SELECT word_en 
+                FROM english_words.forgot_en_words """)
+    rows = cur.fetchall()
+    key_en = 0
+    for i in rows:
+        key_en += 1
+        dict_forgotten_word[key_en] = i[0]
+
+    cur.execute("""SELECT word_ru 
+                FROM english_words.forgot_en_words """)
+    rows = cur.fetchall()
+    key_ru = 1000
+    for i in rows:
+        key_ru += 1
+        dict_forgotten_word[key_ru] = i[0]
+    return dict_forgotten_word
 
 def diff_1():
     points_ = 0
@@ -337,7 +391,8 @@ def diff_1():
                 break
             elif res == 'Выход' or res == 'выход':
                 conn_db.close()
-                print(f'\n\nТренировка завершена!\n>>>> Твой результат ---------> {points_} очков. ')
+                print(f'\n\nТренировка завершена!'
+                      f'\n>>>> Твой результат ---------> {points_} очков. ')
                 return '============= программа выключена =============\n\n'
             elif res == 'Помощь' or res == 'помощь':
                 print(f'----- подсказка: {dict_pol_les_preply[num + 1000]}')
@@ -346,32 +401,47 @@ def diff_1():
             else:
                 points_ = add_points(points_, False)
 
+
 def diff_2():
     points_ = 0
     while True:
-        num = random.randint(1001, 1137) # 1137
+        counter = len(forgotten_words()) / 2
+        dict_forgotten = forgotten_words()
+        num = random.randint(1, counter) 
         while True:
-            print(f'\nRu: {dict_pol_les_preply[num]}')
-            res = input('En: ').strip()
-            if res == dict_pol_les_preply[num - 1000]:
-                points_ += points(True)
-                print('>>>> ВЕРНО! +1 point.')
-                if points_ % 10 == 0:
-                    print(f'>>>> Твой результат ---------> {points_} очков.')
-                elif points_ == 21:
-                    print(f'Поздравляю!\nТвой результат {points_} очков\nПоменяй сложность если слишком легко.')
+            print(f'\nEn: {dict_forgotten[num]}')
+            res = input('Ru: ').strip()
+            if res == dict_forgotten[num + 1000]:
+                points_ = add_points(points_, True)
                 break
-            elif res == 'Exit' or res == 'exit':
-                print(f'\n\nТренировка завершена!\n>>>> Твой результат ---------> {points_} очков. ')
+            elif res == 'Выход' or res == 'выход':
+                conn_db.close()
+                print(f'\n\nТренировка завершена!'
+                      f'\n>>>> Твой результат ---------> {points_} очков. ')
                 return '============= программа выключена =============\n\n'
-            elif res == 'Help' or res == 'help':
-                print(f'----- подсказка: {dict_pol_les_preply[num - 1000]}')
+            elif res == 'Помощь' or res == 'помощь':
+                print(f'----- подсказка: {dict_forgotten[num + 1000]}')
             else:
-                print('>>>> ВЫ ОШИБЛИСЬ! -5 points')
-                points_ -= points(False)
-                print(f'\n==================================================\n>>>> СЧЕТ: {points_} points.')
-                print('Попробуй еще раз! \n(чтобы показать ответ набери "help")!\n==================================================')
+                points_ = add_points(points_, False)
 
+def clear_forgotten_table():
+    """ """ 
+    cur = conn_db.cursor()
+    cur.execute("""TRUNCATE TABLE english_words.eng_to_rus_words 
+                RESTART identity""")
+    print('Очистка данный выполнена!')
+    return dif_choice()
+
+def insert_new_forgotten_words():
+    """ """
+    cur = conn_db.cursor()
+    cur.execute("""INSERT into english_words.test (word_en, word_ru) 
+                SELECT word_en, word_ru 
+                FROM english_words.eng_to_rus_words 
+                WGERE flag_forgot = 1""") # замени на актуальную таблицу
+    conn_db.commit()
+    print('Перенос данных выполнен!')
+    return dif_choice()
 
 print(dif_choice())
 
